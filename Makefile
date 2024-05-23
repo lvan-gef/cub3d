@@ -32,8 +32,7 @@ SRCS 	:= 	src/main.c 						       \
 LIB				= ./libft/libft.a
 LIBFT_LOC		= libft
 LIBFT_LIB		= libft/libft.a
-MLX_LOC			= MLX42
-MLX_LIB			= MLX42/build/libmlx42.a
+LIBMLX = MLX42
 
 UNAME_S := $(shell uname -s)
 MLX_FLAGS =
@@ -50,16 +49,20 @@ all: $(NAME)
 
 $(NAME): $(OBJECTS)
 	@$(MAKE) -C $(LIBFT_LOC)
-	# @$(MAKE) -s -C $(MLX_LOC)
-	@$(CC) $(CFLAGS) $(MLX_FLAGS) $(OBJECTS) $(MLX_LIB) $(LIB) -o $(NAME)
+	@$(CC) $(CFLAGS) $(MLX_FLAGS) $(OBJECTS) $(LIBMLX)/build/libmlx42.a $(LIB) -o $(NAME)
 
 $(OBJ_DIR)/%.o : %.c
 	@mkdir -p $(@D)
 	$(CC) $(HEADERS) -c $(CFLAGS) -o $@ $<
 
+mlx:
+	@if [ ! -d "$(LIBMLX)" ]; then \
+		git clone https://github.com/codam-coding-college/MLX42.git $(LIBMLX) && cd $(LIBMLX) && git checkout v2.3.3 && cmake -B build && cmake --build build -j4; \
+	fi
+
 clean:
 	@$(MAKE) -s -C $(LIBFT_LOC) clean
-	# @$(MAKE) -s -C $(MLX_LOC) clean
+	# @$ rm -rf MLX42/build
 	@$ rm -rf $(OBJ_DIR)
 
 fclean: clean
@@ -68,4 +71,4 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re mlx
