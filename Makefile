@@ -1,7 +1,7 @@
 NAME 	= 	cub3d
 
 CC				= cc
-CFLAGS 			= -Wall -Wextra -Werror -g3
+CFLAGS 			= -Wall -Wextra -Werror -Wshadow -Wpedantic -g3
 
 SRC_DIR = ./src
 OBJ_DIR = ./obj
@@ -34,8 +34,14 @@ LIBFT_LOC		= libft
 LIBFT_LIB		= libft/libft.a
 MLX_LOC			= MLX42
 MLX_LIB			= MLX42/build/libmlx42.a
-# MLX_FLAGS		= -lglfw3 -framework Cocoa -framework OpenGL -framework IOKit
-MLX_FLAGS		= -ldl -lglfw -pthread -lm
+
+UNAME_S := $(shell uname -s)
+MLX_FLAGS =
+ifeq ($(UNAME_S), Darwin)  # macOS
+    MLX_FLAGS = -lglfw3 -framework Cocoa -framework OpenGL -framework IOKit
+else ifeq ($(UNAME_S), Linux)  # Linux
+    MLX_FLAGS = -ldl -lglfw -pthread -lm
+endif
 HEADERS = -I include -I $(LIBFT_LOC)/include -I $(MLX_LOC)/include
 
 OBJECTS = $(SRCS:%.c=$(OBJ_DIR)/%.o)
