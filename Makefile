@@ -45,7 +45,7 @@ HEADERS = -I include -I $(LIBFT_LOC)/include -I $(MLX_LOC)/include
 
 OBJECTS = $(SRCS:%.c=$(OBJ_DIR)/%.o)
 
-all: $(NAME)
+all: mlx $(NAME)
 
 $(NAME): $(OBJECTS)
 	@$(MAKE) -C $(LIBFT_LOC)
@@ -62,11 +62,11 @@ mlx:
 
 clean:
 	@$(MAKE) -s -C $(LIBFT_LOC) clean
-	# @$ rm -rf MLX42/build
 	@$ rm -rf $(OBJ_DIR)
 
 fclean: clean
 	@$(RM) $(NAME)
+	@$ rm -rf MLX42
 	@$(MAKE) -s -C $(LIBFT_LOC) fclean
 
 re: fclean all

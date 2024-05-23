@@ -1,6 +1,4 @@
 #include "../../include/cub3d_engine.h"
-#include "MLX42/MLX42.h"
-#include "libft.h"
 
 static	bool	load_assets(t_program *program)
 {
