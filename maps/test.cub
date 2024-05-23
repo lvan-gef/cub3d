@@ -1,7 +1,7 @@
-NO ./images/House.png
-SO ./images/Rainbow.png
-WE ./images/Parrot.png
-EA ./images/NormalTree.png
+NO ./img/House.png
+SO ./img/Rainbow.png
+WE ./img/Parrot.png
+EA ./img/NormalTree.png
 F 220,100,255
 C 1,30,0
 111111111

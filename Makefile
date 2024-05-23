@@ -29,6 +29,7 @@ SRCS 	:= 	src/main.c 						       \
 			# $(ENGINE_DIR)/raycasting_utils.c       \
 			# $(ENGINE_DIR)/utility.c
 
+OBJECTS = $(SRCS:%.c=$(OBJ_DIR)/%.o)
 LIB				= ./libft/libft.a
 LIBFT_LOC		= libft
 LIBFT_LIB		= libft/libft.a
@@ -36,14 +37,13 @@ LIBMLX = MLX42
 
 UNAME_S := $(shell uname -s)
 MLX_FLAGS =
-ifeq ($(UNAME_S), Darwin)  # macOS
+ifeq ($(UNAME_S), Darwin)
     MLX_FLAGS = -lglfw3 -framework Cocoa -framework OpenGL -framework IOKit
-else ifeq ($(UNAME_S), Linux)  # Linux
+else ifeq ($(UNAME_S), Linux)
     MLX_FLAGS = -ldl -lglfw -pthread -lm
 endif
-HEADERS = -I include -I $(LIBFT_LOC)/include -I $(MLX_LOC)/include
 
-OBJECTS = $(SRCS:%.c=$(OBJ_DIR)/%.o)
+HEADERS = -I include -I $(LIBFT_LOC)/include -I $(MLX_LOC)/include
 
 all: mlx $(NAME)
 
