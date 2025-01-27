@@ -1,122 +1,129 @@
-#include "../../include/cub3d_parser.h"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        ::::::::            */
+/*   validate_map.c                                     :+:    :+:            */
+/*                                                     +:+                    */
+/*   By: tosinga <tosinga@student.42.fr>              +#+                     */
+/*                                                   +#+                      */
+/*   Created: 2024/08/20 21:23:37 by tosinga       #+#    #+#                 */
+/*   Updated: 2024/11/25 19:21:38 by lvan-gef      ########   odam.nl         */
+/*                                                                            */
+/* ************************************************************************** */
 
-static const char	*g_positions[4] = {"N", "S", "W", "E"};
+#include "../../include/cub3d.h"
 
-int	check_characters(char *map)
+static	ssize_t	check_characters(const char *map, const char *positions[])
 {
-	int		i;
-	char	flag_player;
+	ssize_t				index;
+	char				start_dir;
 
-	i = 0;
-	flag_player = '\0';
-	while (map[i])
+	start_dir = '\0';
+	if (_check_chars(map, &start_dir) != true)
 	{
-		if ((ft_strchr(PLAYER_POS, map[i]) != NULL) && flag_player == '\0')
-		{
-			flag_player = map[i];
-			i++;
-		}
-		if (ft_strchr(VALID_MAP_CHARS, map[i]) != NULL)
-			i++;
-		else
-			print_error("Invalid map: wrong character input");  // leaks map
+		return (-1);
 	}
-	if (!flag_player)
-		print_error("Invalid map: No player input");  // leaks map
-	i = 0;
-	while (g_positions[i])
+	if (start_dir == '\0')
 	{
-		if (*g_positions[i] == flag_player)
+		ft_putendl_fd("No player found in map!", 2);
+		return (-1);
+	}
+	index = 0;
+	while (positions[index])
+	{
+		if (*positions[index] == start_dir)
 			break ;
-		i++;
+		index++;
 	}
-	return (i);
+	return (index);
 }
 
-void	find_max_xy(char *map, t_program *program)
+static	bool	set_map_size(char **map, t_program *program)
 {
-	int	counter;
-	int	max_row;
-	int	max_col;
-	int	max_col_counter;
+	size_t	index;
+	size_t	col_len;
 
-	max_row = 1;
-	max_col = 0;
-	max_col_counter = 0;
-	counter = 0;
-	while (map[counter])
+	index = 0;
+	while (map[index] != NULL)
 	{
-		if (map[counter] != '\n')
-			max_col_counter++;
-		if (map[counter] == '\n')
-		{
-			max_row++;
-			if (max_col_counter > max_col)
-				max_col = max_col_counter;
-			max_col_counter = 0;
-		}
-		counter++;
+		program->player->max_map.row++;
+		col_len = ft_strlen(map[index]);
+		if (col_len > program->player->max_map.col)
+			program->player->max_map.col = col_len;
+		index++;
 	}
-	if (max_col_counter > max_col)
-		max_col = max_col_counter;
-	if (max_row < 3)
-		print_error("Invalid map: Map not big enough");  // leaks map
-	program->max_xy.row = max_row;
-	program->max_xy.col = max_col;
+	if (program->player->max_map.row < 3)
+		return (false);
+	return (true);
 }
 
-void	fill_map(char *map, t_program *program)
+static	bool	fill_map(const char *map, t_program *program)
 {
-	char	**temp_map;
-	char	**dst_map;
-	int		row_counter;
+	char		**temp_map;
 
-	row_counter = 0;
-	temp_map = ft_split(map, '\n'); // NULL check
-	dst_map = ft_calloc(program->max_xy.row + 1, sizeof(char *));  // NULL check, leak map,  temp_map
-	while (row_counter < program->max_xy.row)
+	temp_map = ft_split(map, '\n');
+	if (temp_map == NULL)
 	{
-		dst_map[row_counter] = ft_calloc(program->max_xy.col + 1, sizeof(char));  // NULL check, leak map,  temp_map
-		ft_memset(dst_map[row_counter], ' ', program->max_xy.col);
-		ft_memcpy(dst_map[row_counter], temp_map[row_counter], \
-			ft_strlen(temp_map[row_counter]));
-		row_counter++;
+		ft_putstr_fd("Failed to split the map\n", 2);
+		return (false);
 	}
+	if (set_map_size(temp_map, program) != true)
+	{
+		ft_putendl_fd("Map is to small to play...", 2);
+		return (false);
+	}
+	if (_create_map(program) != true)
+	{
+		free_char_arr(temp_map);
+		return (false);
+	}
+	if (_set_map(program->player, temp_map) != true)
+		return (false);
 	free_char_arr(temp_map);
-	free(map);
-	program->map = dst_map;
+	return (true);
 }
 
-void	fill_player(t_program *program)
+static	bool	fill_player(t_program *program)
 {
-	int	count_x;
-	int	count_y;
+	size_t	col;
+	size_t	row;
 
-	count_x = 0;
-	count_y = 0;
-	while (count_y < program->max_xy.row)
+	row = 0;
+	while (row < program->player->max_map.row)
 	{
-		while (count_x < program->max_xy.col)
+		col = 0;
+		while (col < program->player->max_map.col)
 		{
-			if (ft_strchr(PLAYER_POS, program->map[count_y][count_x]) != NULL)
+			if (ft_strchr(PLAYER_POS, program->player->map[row][col]) != NULL)
 			{
-				program->start_pos.col = count_x;
-				program->start_pos.row = count_y;
-				return ;
+				program->player->player_pos.col = (double)col;
+				program->player->player_pos.row = (double)row;
+				return (true);
 			}
-			count_x++;
+			col++;
 		}
-		count_x = 0;
-		count_y++;
+		row++;
 	}
+	ft_putstr_fd("Failed to find player position\n", 2);
+	return (false);
 }
 
-void	validate_map(char *map, t_program *program)
+bool	validate_map(const char *map, t_program *program)
 {
-	program->spawning_pos = check_characters(map);
-	find_max_xy(map, program);
-	fill_map(map, program);
-	fill_player(program);
-	printf("col: %i\n row: %i\n", program->start_pos.col, program->start_pos.row);
-	check_surrounded_walls(program);
+	ssize_t				pos;
+	static const char	*positions[] = {"N", "S", "W", "E", NULL};
+
+	pos = check_characters(map, positions);
+	if (pos == -1)
+		return (false);
+	program->player->starting_dir = *positions[pos];
+	if (fill_map(map, program) != true)
+		return (false);
+	if (fill_player(program) != true)
+		return (false);
+	if (_check_surrounded_walls(program->player->map) != true)
+	{
+		ft_putendl_fd("Invalid map", 2);
+		return (false);
+	}
+	return (true);
 }

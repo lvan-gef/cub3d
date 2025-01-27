@@ -6,13 +6,13 @@
 /*   By: lvan-gef <lvan-gef@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2023/02/12 17:42:54 by lvan-gef      #+#    #+#                 */
-/*   Updated: 2024/05/05 02:50:49 by lvan-gef      ########   odam.nl         */
+/*   Updated: 2024/06/08 19:22:39 by lvan-gef      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/ft_printf.h"
 
-int	write_str(char *s)
+int	write_str(const char *s)
 {
 	int	count;
 	int	result;

@@ -1,76 +1,111 @@
-#include "../../include/cub3d_parser.h"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        ::::::::            */
+/*   validate_identifiers.c                             :+:    :+:            */
+/*                                                     +:+                    */
+/*   By: tosinga <tosinga@student.42.fr>              +#+                     */
+/*                                                   +#+                      */
+/*   Created: 2024/08/20 21:23:37 by tosinga       #+#    #+#                 */
+/*   Updated: 2024/11/25 19:20:51 by lvan-gef      ########   odam.nl         */
+/*                                                                            */
+/* ************************************************************************** */
 
-void	validate_structure_paths(char **elements, t_program *program)
+#include "../../include/cub3d.h"
+
+bool	validate_paths(char **elements, t_program *program)
 {
-	int	i;
+	size_t	index;
 
-	i = 0;
-	while (i < ASSETS_SIZE)
+	index = 0;
+	while (index < MAX_IMGS)
 	{
-		if (!check_png(elements[i]) || (ft_strncmp("./", elements[i], 2) != 0))
-			print_error("Incorrect filepath input!");  // leak elements and program
-		program->textures[i] = ft_strdup(elements[i]);  // NUll check or program must handle it
-		free (elements[i]);
-		i++;
+		program->paths[index] = ft_strtrim(elements[index], WHITESPACE);
+		if (program->paths[index] == NULL)
+		{
+			ft_putendl_fd("Path is NULL", 2);
+			return (false);
+		}
+		if (_check_png(elements[index]) != true)
+			return (false);
+		index++;
 	}
+	return (true);
 }
 
-void	convert_digits(char **input, int *colors)
+static	bool	_convert_digits(char **input, uint32_t *color)
 {
 	int	i;
-	// int	j;  // set but never used
+	int	colors[3];
 
 	i = 0;
-	// j = 0;
 	while (i < 3)
 	{
-		colors[i] = ft_atorgb(input[i]);
+		colors[i] = _atorgb(input[i]);
 		if (colors[i] < 0)
-			print_error("Incorrect RGB input");  // leak elements, input and **inputs
+			return (false);
 		i++;
 	}
+	*color = (uint32_t)
+		(colors[0] << 24 | colors[1] << 16 | colors[2] << 8 | 255);
+	return (true);
 }
 
-void	convert_rgb(char *input, int *colors)
+static	bool	_convert_rgb(const char *input, uint32_t *color)
 {
-	char	**split_elements;
-	char	*temp;
-	int		i;
+	char	**elements;
+	size_t	input_len;
 
-	i = 0;
-	split_elements = ft_split(input, ',');  // NULL check
-	while (split_elements[i])  // error when split_elements is NULL
-		i++;
-	if (i != 3)
-		print_error("Incorrect RGB input");  // leak elements, split_elements[i] and input
-	i = 0;
-	while (split_elements[i])
+	input_len = ft_strlen(input);
+	if (input[input_len - 1] == ',')
+		return (false);
+	elements = ft_split(input, ',');
+	if (elements == NULL)
 	{
-		temp = ft_strtrim(split_elements[i], WHITESPACE);  // NULL check
-		free(split_elements[i]);
-		split_elements[i] = temp;
-		i++;
+		ft_putendl_fd("Failed to split rgb", 2);
+		return (false);
 	}
-	convert_digits(split_elements, colors);
-	free_char_arr(split_elements);
-	free(input);
-}
-
-void	validate_rgb_input(char **elements, t_program *program)
-{
-	convert_rgb(elements[F], program->floor_rgb);
-	convert_rgb(elements[C], program->ceiling_rgb);
-}
-
-void	validate_nr_of_identifiers(char **elements)
-{
-	int	i;
-
-	i = 0;
-	while (i < SIZE + 1)
+	if (_check_rgb_input(elements) != true)
 	{
-		if (elements[i] == NULL)
-			print_error("Missing object input");  // leak elements
-		i++;
+		free_char_arr(elements);
+		return (false);
 	}
+	if (_convert_digits(elements, color) != true)
+	{
+		free_char_arr(elements);
+		return (false);
+	}
+	free_char_arr(elements);
+	return (true);
+}
+
+bool	validate_rgb_input(char **elements, t_program *program)
+{
+	if (_convert_rgb(elements[F], &program->player->floor_color) != true)
+	{
+		ft_putendl_fd("Invalid RGB format", 2);
+		return (false);
+	}
+	if (_convert_rgb(elements[C], &program->player->ceiling_color) != true)
+	{
+		ft_putendl_fd("Invalid RGB format", 2);
+		return (false);
+	}
+	return (true);
+}
+
+bool	validate_nr_of_identifiers(char **elements)
+{
+	size_t	index;
+
+	index = 0;
+	while (index < SIZE)
+	{
+		if (elements[index] == NULL)
+		{
+			ft_putstr_fd("Missing object input\n", 2);
+			return (false);
+		}
+		index++;
+	}
+	return (true);
 }

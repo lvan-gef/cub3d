@@ -1,7 +1,0 @@
-cub3d
-libft/libft.a
-libft/obj/
-obj/
-compile_commands.json
-.cache/
-MLX42/

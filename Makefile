@@ -1,74 +1,114 @@
-NAME 	= 	cub3d
+NAME := cub3D
 
-CC				= cc
-CFLAGS 			= -Wall -Wextra -Werror -Wshadow -Wpedantic -g3
+# Compiler and flags
+CC        := cc
+CFLAGS    := -Wall -Wextra -Werror -Wshadow -Wpedantic -Wconversion -Wdouble-promotion
+DEBUGFLAG := -g3
+ASAN      := -fsanitize=address -fno-omit-frame-pointer
+DEPSFLAGS := -MMD -MP
 
-SRC_DIR = ./src
-OBJ_DIR = ./obj
+# Directories
+SRC_DIR   := src
+ENG_DIR   := $(SRC_DIR)/engine
+PAR_DIR   := $(SRC_DIR)/parser
+OBJ_DIR   := obj
+DEP_DIR   := $(OBJ_DIR)
 
-PARSER_DIR := $(SRC_DIR)/parser
-ENGINE_DIR := $(SRC_DIR)/engine
+# Source files organization
+ENGINE_SRC := buffer.c dda_calc.c render.c init_mlx.c textures.c hooks.c
+PARSER_SRC := parser.c parse_utils.c validate_identifiers.c validate_ident_utils.c \
+              validate_map.c validate_map_utils.c validate_map_surrounded.c \
+              tokenize_input.c tokenize_utils.c
+MAIN_SRC   := main.c cub_free.c
 
-SRCS 	:= 	src/main.c 						       \
-			src/debugger.c						   \
-			$(PARSER_DIR)/mlx_processing.c		   \
-			$(PARSER_DIR)/parse_utils.c			   \
-			$(PARSER_DIR)/parser.c				   \
-			$(PARSER_DIR)/tokenize_input.c		   \
-			$(PARSER_DIR)/utils.c				   \
-			$(PARSER_DIR)/validate_identifiers.c   \
-			$(PARSER_DIR)/validate_map.c		   \
-			$(PARSER_DIR)/validate_map_surrounded.c\
-			$(ENGINE_DIR)/render_it.c
-			# $(ENGINE_DIR)/2dmap.c                  \
-			# $(ENGINE_DIR)/dda_raycast.c            \
-			# $(ENGINE_DIR)/drawgame.c               \
-			# $(ENGINE_DIR)/hooks.c                  \
-			# $(ENGINE_DIR)/hooks_determine_ra.c     \
-			# $(ENGINE_DIR)/raycasting.c             \
-			# $(ENGINE_DIR)/raycasting_utils.c       \
-			# $(ENGINE_DIR)/utility.c
+# Construct full paths
+SRCS := $(addprefix $(SRC_DIR)/, $(MAIN_SRC)) \
+        $(addprefix $(ENG_DIR)/, $(ENGINE_SRC)) \
+        $(addprefix $(PAR_DIR)/, $(PARSER_SRC))
 
-OBJECTS = $(SRCS:%.c=$(OBJ_DIR)/%.o)
-LIB				= ./libft/libft.a
-LIBFT_LOC		= libft
-LIBFT_LIB		= libft/libft.a
-LIBMLX = MLX42
+# Objects and dependencies
+OBJECTS := $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+DEPS    := $(OBJECTS:.o=.d)
 
+# Libraries
+LIBFT_DIR  := libft
+LIBFT      := $(LIBFT_DIR)/libft.a
+LIBMLX_DIR := MLX42
+LIBMLX     := $(LIBMLX_DIR)/build/libmlx42.a
+
+# OS-specific settings
 UNAME_S := $(shell uname -s)
-MLX_FLAGS =
 ifeq ($(UNAME_S), Darwin)
-    MLX_FLAGS = -lglfw3 -framework Cocoa -framework OpenGL -framework IOKit
+    MLX_FLAGS := -lglfw3 -framework Cocoa -framework OpenGL -framework IOKit
 else ifeq ($(UNAME_S), Linux)
-    MLX_FLAGS = -ldl -lglfw -pthread -lm
+    MLX_FLAGS := -ldl -lglfw -pthread -lm
+else
+    $(error Unsupported operating system: $(UNAME_S))
 endif
 
-HEADERS = -I include -I $(LIBFT_LOC)/include -I $(MLX_LOC)/include
+# Include paths
+HEADERS := -I include -I $(LIBFT_DIR)/include -I $(LIBMLX_DIR)/include
 
-all: mlx $(NAME)
+# Colors for help message
+BLUE := \033[36m
+MARGENTA := \033[35m
+NC := \033[0m
 
-$(NAME): $(OBJECTS)
-	@$(MAKE) -C $(LIBFT_LOC)
-	@$(CC) $(CFLAGS) $(MLX_FLAGS) $(OBJECTS) $(LIBMLX)/build/libmlx42.a $(LIB) -o $(NAME)
+# Build rules
+.PHONY: all
+all: $(NAME)  ## Build release version (default)
 
-$(OBJ_DIR)/%.o : %.c
+.PHONY: debug
+debug: CFLAGS += $(DEBUGFLAG) $(ASAN)
+debug: $(NAME)  ## Build the debug version with ASAN
+
+.PHONY: clean
+clean:  ## Clean object files
+	@$(MAKE) -C $(LIBFT_DIR) clean
+	@rm -rf $(OBJ_DIR)
+	@echo "Cleaned object files"
+
+.PHONY: fclean
+fclean: clean  ## Clean object, bin and MLX files
+	@$(MAKE) -C $(LIBFT_DIR) fclean
+	@rm -rf $(LIBMLX_DIR)
+	@rm -f $(NAME)
+	@echo "Cleaned everything"
+
+.PHONY: re
+re: fclean all  ## Clean all and recompile
+
+.PHONY: help
+help:  ## Get help
+	@echo -e 'Usage: make ${BLUE}<target>${NC}'
+	@echo -e 'Available targets:'
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  ${BLUE}%-15s${NC} %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+# Main build
+$(NAME): $(LIBFT) $(LIBMLX) $(OBJECTS)
+	$(CC) $(CFLAGS) $(OBJECTS) $(LIBMLX) $(LIBFT) $(MLX_FLAGS) -o $@
+	@echo "Build complete: $(NAME)"
+
+# Pattern rule for object files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	@mkdir -p $(@D)
-	$(CC) $(HEADERS) -c $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) $(DEPSFLAGS) $(HEADERS) -c $< -o $@
 
-mlx:
-	@if [ ! -d "$(LIBMLX)" ]; then \
-		git clone https://github.com/codam-coding-college/MLX42.git $(LIBMLX) && cd $(LIBMLX) && git checkout v2.3.3 && cmake -B build && cmake --build build -j4; \
+# Create directories
+$(OBJ_DIR):
+	@mkdir -p $(OBJ_DIR) $(OBJ_DIR)/engine $(OBJ_DIR)/parser
+
+# Library builds
+$(LIBFT):
+	@$(MAKE) -C $(LIBFT_DIR)
+
+$(LIBMLX):
+	@if [ ! -d "$(LIBMLX_DIR)" ]; then \
+		git clone https://github.com/codam-coding-college/MLX42.git $(LIBMLX_DIR) && \
+		cd $(LIBMLX_DIR) && \
+		git checkout v2.3.3 && \
+		cmake -B build && \
+		cmake --build build -j4; \
 	fi
 
-clean:
-	@$(MAKE) -s -C $(LIBFT_LOC) clean
-	@$ rm -rf $(OBJ_DIR)
-
-fclean: clean
-	@$(RM) $(NAME)
-	@$ rm -rf MLX42
-	@$(MAKE) -s -C $(LIBFT_LOC) fclean
-
-re: fclean all
-
-.PHONY: all clean fclean re mlx
+-include $(DEPS)

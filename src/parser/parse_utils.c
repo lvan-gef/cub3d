@@ -1,28 +1,59 @@
-#include "../../include/cub3d_parser.h"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        ::::::::            */
+/*   parse_utils.c                                      :+:    :+:            */
+/*                                                     +:+                    */
+/*   By: tosinga <tosinga@student.42.fr>              +#+                     */
+/*                                                   +#+                      */
+/*   Created: 2024/08/20 21:23:22 by tosinga       #+#    #+#                 */
+/*   Updated: 2024/11/23 20:25:43 by lvan-gef      ########   odam.nl         */
+/*                                                                            */
+/* ************************************************************************** */
 
-int	check_cub(char *arg)
+#include "../../include/cub3d.h"
+
+void	free_char_arr(char **arr)
 {
-	int	len;
+	size_t	row;
 
-	len = ft_strlen(arg);
-	if (len == 0 || ft_strncmp(&arg[len - 4], ".cub", 4) != 0)
-		print_error("Not a .cub file!");
-	return (0);
+	row = 0;
+	while (arr[row] != NULL)
+	{
+		free(arr[row]);
+		row++;
+	}
+	free(arr);
 }
 
-int	check_png(char *arg)
+bool	check_cub(char *arg)
 {
-	int	len;
+	size_t	len;
 
 	len = ft_strlen(arg);
-	if (len == 0 || ft_strncmp(&arg[len - 4], ".png", 4) != 0)
-		print_error("Not a .png file!");  // leaks element
-	return (1);
+	if (len == 0 || ft_strncmp(&arg[len - 4], ".cub", 5) != 0)
+	{
+		ft_putstr_fd("Not a .cub file!\n", 2);
+		return (false);
+	}
+	return (true);
 }
 
-int	ft_atorgb(const char *str)
+bool	_check_png(char *arg)
 {
-	long	i;
+	size_t	len;
+
+	len = ft_strlen(arg);
+	if (len == 0 || ft_strncmp(&arg[len - 4], ".png", 5) != 0)
+	{
+		ft_putendl_fd("Not a .png file!", 2);
+		return (false);
+	}
+	return (true);
+}
+
+int	_atorgb(const char *str)
+{
+	int	i;
 
 	i = 0;
 	while (*str)
@@ -32,7 +63,7 @@ int	ft_atorgb(const char *str)
 		i = (i * 10 + *str - '0');
 		str++;
 	}
-	if (i > 255)
+	if (i < 0 || i > 255)
 		return (-1);
 	return (i);
 }
