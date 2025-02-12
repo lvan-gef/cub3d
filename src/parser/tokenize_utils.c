@@ -3,9 +3,9 @@
 /*                                                        ::::::::            */
 /*   tokenize_utils.c                                   :+:    :+:            */
 /*                                                     +:+                    */
-/*   By: tosinga <tosinga@student.42.fr>              +#+                     */
+/*   By: lvan-gef <lvan-gef@student.42.fr>              +#+                   */
 /*                                                   +#+                      */
-/*   Created: 2024/08/20 21:23:37 by tosinga       #+#    #+#                 */
+/*   Created: 2024/08/20 21:23:37 by lvan-gef       #+#    #+#                */
 /*   Updated: 2024/11/23 17:49:42 by lvan-gef      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
